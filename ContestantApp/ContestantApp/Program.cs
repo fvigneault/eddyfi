@@ -27,30 +27,53 @@ namespace ContestantApp
       }
     }
 
+    private enum Direction
+    {
+      Up,
+      Down,
+      Left,
+      Right
+    }
+
     private static List<Point> GetPoints()
     {
       List<Point> map = LoadMap();
 
       map.Sort((point1, point2) => point1.Value.CompareTo(point2.Value));
 
-      var tuple2 = GetPathBetweenPoints(map.Skip(31).ToList());
-      tuple2.Item1.Insert(0, map.First());
-      return tuple2.Item1;
+      var payingMap = map.Skip(31).ToList();
+
+      Dictionary<String, List<Point>> clusters = GetClusters(payingMap, 2, 4);
+
+      List<List<Point>> clustersOrderedList = new List<List<Point>>()
+      {
+        clusters["0,250"],
+        clusters["0,0"],
+        clusters["500,0"],
+        clusters["500,250"],
+        clusters["500,500"],
+        clusters["500,750"],
+        clusters["0,750"],
+        clusters["0,500"]
+      };
+
+      clustersOrderedList[0].Sort((point1, point2) => -point1.X.CompareTo(point2.X));
+      clustersOrderedList[1].Sort((point1, point2) => point1.X.CompareTo(point2.X));
+      clustersOrderedList[2].Sort((point1, point2) => point1.X.CompareTo(point2.X));
+      clustersOrderedList[3].Sort((point1, point2) => -point1.X.CompareTo(point2.X));
+      clustersOrderedList[4].Sort((point1, point2) => point1.X.CompareTo(point2.X));
+      clustersOrderedList[5].Sort((point1, point2) => -point1.X.CompareTo(point2.X));
+      clustersOrderedList[6].Sort((point1, point2) => -point1.X.CompareTo(point2.X));
+      clustersOrderedList[7].Sort((point1, point2) => point1.X.CompareTo(point2.X));
 
 
-      List<Cluster> clusters = GetClusters(map.Skip(31).ToList());
-
-      var tuple = GetPathBetweenPoints(clusters.Select(c => c.Represent).ToList());
 
       List<Point> path = new List<Point>()
       {
         map.First()
       };
 
-      foreach(Point point in tuple.Item1) {
-        Cluster currentCluster = clusters.Find(cluster => cluster.Represent.Equals(point));
-        path.AddRange(currentCluster.Path);
-      }
+      path.AddRange(clustersOrderedList.SelectMany(x => x));
 
       return path;
     }
@@ -62,13 +85,13 @@ namespace ContestantApp
       public double Value;
     }
 
-    private static List<Cluster> GetClusters(List<Point> points)
+    private static Dictionary<String, List<Point>> GetClusters(List<Point> points, int nbClustersHorizontal, int nbClustersVertical)
     {
       Dictionary<String, List<Point>> clusters = new Dictionary<string, List<Point>>();
 
       foreach(Point point in points) {
-        int xTopCorner = point.X / 200 * 200;
-        int yTopCorner = point.Y / 200 * 200;
+        int xTopCorner = point.X / (1000 / nbClustersHorizontal) * (1000 / nbClustersHorizontal);
+        int yTopCorner = point.Y / (1000 / nbClustersVertical) * (1000 / nbClustersVertical);
         String key = xTopCorner + "," + yTopCorner;
 
         if (!clusters.ContainsKey(key)){
@@ -78,22 +101,7 @@ namespace ContestantApp
         clusters[key].Add(point);
       }
 
-      return clusters.Values.Select(BuildCluster).ToList();
-    }
-
-    private static Cluster BuildCluster(List<Point> points) {
-      Cluster cluster = new Cluster();
-
-      Tuple<List<Point>, double> tuple = GetPathBetweenPoints(points);
-      double revenue = tuple.Item1.Sum(point => point.Value);
-      double totalDistance = tuple.Item2;
-      cluster.Value = revenue - totalDistance * 10;
-
-      cluster.Path = tuple.Item1;
-
-      cluster.Represent = tuple.Item1.First();
-
-      return cluster;
+      return clusters;
     }
 
     private static Tuple<List<Point>, double> GetPathBetweenPoints(List<Point> points)
