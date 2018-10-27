@@ -15,7 +15,13 @@ namespace ContestantApp
     {
       const String TeamId = "5bd1e020ce65420001eccb91";
 
-      Validate( TeamId, GetPoints() );
+      var result = GetPoints();
+
+
+      PointManager pm = new PointManager();
+      pm.WriteSolutionToFile(TeamId + ".json", result);
+
+      Validate( TeamId, result );
     }
 
     public static List<Point> LoadMap()
@@ -33,8 +39,12 @@ namespace ContestantApp
 
       map.Sort((point1, point2) => point1.Value.CompareTo(point2.Value));
 
-      var tuple2 = GetPathBetweenPoints(map.Skip(31).ToList());
-      tuple2.Item1.Insert(0, map.First());
+      var payingMap = map.Skip(31).ToList();
+      payingMap.Insert(0, map.First());
+
+      var tuple2 = GetPathBetweenPoints(payingMap);
+
+
       return tuple2.Item1;
 
 
