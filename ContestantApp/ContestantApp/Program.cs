@@ -32,7 +32,12 @@ namespace ContestantApp
       List<Point> map = LoadMap();
 
       map.Sort((point1, point2) => point1.Value.CompareTo(point2.Value));
-      
+
+      var tuple2 = GetPathBetweenPoints(map.Skip(31).ToList());
+      tuple2.Item1.Insert(0, map.First());
+      return tuple2.Item1;
+
+
       List<Cluster> clusters = GetClusters(map.Skip(31).ToList());
 
       var tuple = GetPathBetweenPoints(clusters.Select(c => c.Represent).ToList());
