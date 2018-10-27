@@ -56,27 +56,20 @@ namespace ContestantApp
     private static List<Link> GetSubListLinks(List<Link> links)
     {
       List<Link> optimalLinks = new List<Link>();
-      Dictionary<Point, int> timesPointIsUsed = new Dictionary<Point, int>();
+      Dictionary<Point, bool> pointIsUsedAsP1 = new Dictionary<Point, bool>();
+      Dictionary<Point, bool> pointIsUsedAsP2 = new Dictionary<Point, bool>();
 
       foreach (Link currentLink in links)
       {
-        var point1CanBeUsed = !timesPointIsUsed.ContainsKey(currentLink.p1) || timesPointIsUsed[currentLink.p1] == 1;
-        var point2CanBeUsed = !timesPointIsUsed.ContainsKey(currentLink.p2) || timesPointIsUsed[currentLink.p2] == 1;
+        var point1CanBeUsed = !pointIsUsedAsP1.ContainsKey(currentLink.p1) || pointIsUsedAsP1[currentLink.p1];
+        var point2CanBeUsed = !pointIsUsedAsP2.ContainsKey(currentLink.p2) || pointIsUsedAsP2[currentLink.p2];
 
         if (point1CanBeUsed && point2CanBeUsed)
         {
           optimalLinks.Add(currentLink);
 
-          if (!timesPointIsUsed.ContainsKey(currentLink.p1))
-          {
-            timesPointIsUsed[currentLink.p1] = 0;
-          }
-          if (!timesPointIsUsed.ContainsKey(currentLink.p2))
-          {
-            timesPointIsUsed[currentLink.p2] = 0;
-          }
-          timesPointIsUsed[currentLink.p1] = timesPointIsUsed[currentLink.p1] + 1;
-          timesPointIsUsed[currentLink.p2] = timesPointIsUsed[currentLink.p2] + 1;
+          pointIsUsedAsP1[currentLink.p1] = true;
+          pointIsUsedAsP2[currentLink.p2] = true;
         }
       }
       return optimalLinks;
@@ -89,12 +82,12 @@ namespace ContestantApp
       var firstLink = links.First();
       path.Add(firstLink.p1);
       path.Add(firstLink.p2);
-      links.Remove(firstLink);
+      links.RemoveAt(0);
 
       while (links.Count != 0)
       {
         var currentLink = links.First();
-        links.RemoveRange(0, 1);
+        links.RemoveAt(0);
 
         var indexP1 = path.IndexOf(currentLink.p1);
         var indexP2 = path.IndexOf(currentLink.p2);
