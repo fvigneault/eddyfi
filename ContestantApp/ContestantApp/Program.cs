@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using ContestantApp.Utilities;
@@ -32,6 +33,78 @@ namespace ContestantApp
       public Point p1;
       public Point p2;
       public double distance;
+    }
+
+    private static Tuple<Link, Link> SplitLink(Link link, Point point)
+    {
+      return new Tuple<Link, Link>(
+        new Link
+        {
+          p1 = link.p1,
+          p2 = point,
+          distance = GetDistance(link.p1, point)
+        },
+        new Link
+        {
+          p1 = point,
+          p2 = link.p2,
+          distance = GetDistance(point, link.p2)
+        });
+    }
+
+    private static Link FindLinkToSplit(Point point, List<Link> existingLinks)
+    {
+      Link linkMostEasilySplittable = null;
+      double smallestDifferenceOfSplittedLinks = Double.PositiveInfinity;
+
+      foreach (var link in existingLinks)
+      {
+        var newLinks = SplitLink(link, point);
+        var currentDistanceOfSplittedLinks = newLinks.Item1.distance + newLinks.Item2.distance;
+        var currentDifferenceOfSplittedLinks = currentDistanceOfSplittedLinks - link.distance;
+        if (currentDifferenceOfSplittedLinks < smallestDifferenceOfSplittedLinks)
+        {
+          linkMostEasilySplittable = link;
+          smallestDifferenceOfSplittedLinks = currentDifferenceOfSplittedLinks;
+        }
+      }
+
+      return linkMostEasilySplittable;
+    }
+
+    private static List<Link> GetCircularPathInternal(Point point, List<Link> existingLinks)
+    {
+      if (existingLinks.Count == 0)
+      {
+        return new List<Link>
+        {
+          new Link
+          {
+            p1 = point,
+            p2 = point,
+            distance = 0
+          }
+        };
+      }
+
+      var linkToSplit = FindLinkToSplit(point, existingLinks);
+      var newLinks = SplitLink(linkToSplit, point);
+
+      Debug.Assert(existingLinks.Remove(linkToSplit));
+      existingLinks.Add(newLinks.Item1);
+      existingLinks.Add(newLinks.Item2);
+
+      return existingLinks;
+    }
+
+    private static List<Link> GetCircularPath(List<Point> points)
+    {
+      List<Link> links = new List<Link>();
+      foreach (var point in points)
+      {
+        links = GetCircularPathInternal(point, links);
+      }
+      return links;
     }
 
     private static List<Link> GetAllLinks(List<Point> points)
@@ -131,44 +204,11 @@ namespace ContestantApp
 
       var payingMapWithFirst = new List<Point>(map);
       payingMapWithFirst.RemoveRange(1, 30);
-      var allLinksPossible = GetAllLinks(payingMapWithFirst);
-      var optimalLinks = GetSubListLinks(allLinksPossible);
-      var bestPath = GetPathFromLinks(optimalLinks);
-      return bestPath;
 
-      var payingMap = map.Skip(31).ToList();
+      payingMapWithFirst = payingMapWithFirst.Take(170).ToList();
 
-      Dictionary<String, List<Point>> clusters = GetClusters(payingMap, 2, 4);
-
-      List<List<Point>> clustersOrderedList = new List<List<Point>>()
-      {
-        clusters["0,250"],
-        clusters["0,0"],
-        clusters["500,0"],
-        clusters["500,250"],
-        clusters["500,500"],
-        clusters["500,750"],
-        clusters["0,750"],
-        clusters["0,500"]
-      };
-
-      clustersOrderedList[0].Sort((point1, point2) => -point1.X.CompareTo(point2.X));
-      clustersOrderedList[1].Sort((point1, point2) => point1.X.CompareTo(point2.X));
-      clustersOrderedList[2].Sort((point1, point2) => point1.X.CompareTo(point2.X));
-      clustersOrderedList[3].Sort((point1, point2) => -point1.X.CompareTo(point2.X));
-      clustersOrderedList[4].Sort((point1, point2) => point1.X.CompareTo(point2.X));
-      clustersOrderedList[5].Sort((point1, point2) => -point1.X.CompareTo(point2.X));
-      clustersOrderedList[6].Sort((point1, point2) => -point1.X.CompareTo(point2.X));
-      clustersOrderedList[7].Sort((point1, point2) => point1.X.CompareTo(point2.X));
-
-
-
-      List<Point> path = new List<Point>()
-      {
-        map.First()
-      };
-
-      path.AddRange(clustersOrderedList.SelectMany(x => x));
+      var links = GetCircularPath(payingMapWithFirst);
+      var path = GetPathFromLinks(links);
 
       return path;
     }
@@ -243,22 +283,25 @@ namespace ContestantApp
     {
       PointManager pointManager = new PointManager();
 
-      TaskUtilities.GetSTATask( () =>
+      Double finalScore = 0.0;
+
+      var uiTask = TaskUtilities.GetSTATask( () =>
       {
         Double score;
         Boolean success = pointManager.SetSolutionPoints( _teamId, _points, out score, out String errorMsg );
 
         if ( success )
         {
+          finalScore = score;
           Console.WriteLine( $@"Score: {score}" );
         }
         else
         {
           Console.WriteLine( $@"Message: {errorMsg}" );
         }
+        Directory.CreateDirectory("results");
+        pointManager.WriteSolutionToFile("results/" + finalScore + ".json", _points);
       } );
-
-      pointManager.WriteSolutionToFile( _teamId + ".json", _points );
     }
   }
 }
