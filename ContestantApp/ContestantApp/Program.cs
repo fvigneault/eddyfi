@@ -15,8 +15,24 @@ namespace ContestantApp
     private static void Main()
     {
       const String TeamId = "5bd1e020ce65420001eccb91";
+      PointManager pointManager = new PointManager();
 
-      Validate( TeamId, GetPoints() );
+      Directory.CreateDirectory("results");
+      
+      var points = GetPoints();
+      var score = CalculateScore(points);
+      
+      pointManager.WriteSolutionToFile("results/" + score + ".json", points);
+      Console.WriteLine(score);
+
+      //Validate(TeamId, points);
+      Console.WriteLine("End.");
+      Console.ReadKey();
+    }
+
+    public static double CalculateScore(List<Point> points)
+    {
+      return points.Zip(points.Skip(1).Append(points.First()), (point1, point2) => GetDistance(point1, point2) * -10 + point1.Value).Sum();
     }
 
     public static List<Point> LoadMap()
@@ -106,48 +122,7 @@ namespace ContestantApp
       }
       return links;
     }
-
-    private static List<Link> GetAllLinks(List<Point> points)
-    {
-      var links = new List<Link>();
-      for (int i = 0; i < points.Count; ++i)
-      {
-        for (int j = i + 1; j < points.Count; ++j)
-        {
-          links.Add(new Link
-          {
-            p1 = points[i],
-            p2 = points[j],
-            distance = GetDistance(points[i], points[j])
-          });
-        }
-      }
-      links.Sort((l1, l2) => l1.distance.CompareTo(l2.distance));
-      return links;
-    }
-
-    private static List<Link> GetSubListLinks(List<Link> links)
-    {
-      List<Link> optimalLinks = new List<Link>();
-      Dictionary<Point, bool> pointIsUsedAsP1 = new Dictionary<Point, bool>();
-      Dictionary<Point, bool> pointIsUsedAsP2 = new Dictionary<Point, bool>();
-
-      foreach (Link currentLink in links)
-      {
-        var point1CanBeUsed = !pointIsUsedAsP1.ContainsKey(currentLink.p1) || pointIsUsedAsP1[currentLink.p1];
-        var point2CanBeUsed = !pointIsUsedAsP2.ContainsKey(currentLink.p2) || pointIsUsedAsP2[currentLink.p2];
-
-        if (point1CanBeUsed && point2CanBeUsed)
-        {
-          optimalLinks.Add(currentLink);
-
-          pointIsUsedAsP1[currentLink.p1] = true;
-          pointIsUsedAsP2[currentLink.p2] = true;
-        }
-      }
-      return optimalLinks;
-    }
-
+    
     private static List<Point> GetPathFromLinks(List<Link> links)
     {
       var path = new List<Point>();
@@ -184,10 +159,6 @@ namespace ContestantApp
         {
           path.Insert(indexP2, currentLink.p1);
         }
-        else
-        {
-          var a = 2;
-        }
       }
 
       var indexOfFirstPoint = path.FindIndex(point => point.Value == 0);
@@ -212,68 +183,7 @@ namespace ContestantApp
 
       return path;
     }
-
-    class Cluster
-    {
-      public List<Point> Path;
-      public Point Represent;
-      public double Value;
-    }
-
-    private static Dictionary<String, List<Point>> GetClusters(List<Point> points, int nbClustersHorizontal, int nbClustersVertical)
-    {
-      Dictionary<String, List<Point>> clusters = new Dictionary<string, List<Point>>();
-
-      foreach(Point point in points) {
-        int xTopCorner = point.X / (1000 / nbClustersHorizontal) * (1000 / nbClustersHorizontal);
-        int yTopCorner = point.Y / (1000 / nbClustersVertical) * (1000 / nbClustersVertical);
-        String key = xTopCorner + "," + yTopCorner;
-
-        if (!clusters.ContainsKey(key)){
-          clusters[key] = new List<Point>();
-        }
-
-        clusters[key].Add(point);
-      }
-
-      return clusters;
-    }
-
-    private static Tuple<List<Point>, double> GetPathBetweenPoints(List<Point> points)
-    {
-      List<Point> path = new List<Point>()
-      {
-        points.First()
-      };
-
-      double cumulativeDistance = 0;
-
-      points.Remove(points.First());
-
-      while (points.Count > 0)
-      {
-        var currentPoint = path.Last();
-
-        Point closestPoint = points.First();
-        double smallestDistance = GetDistance(currentPoint, points.First());
-        foreach (Point nextPoint in points)
-        {
-          var distance = GetDistance(currentPoint, nextPoint);
-          if (distance < smallestDistance)
-          {
-            closestPoint = nextPoint;
-            smallestDistance = distance;
-          }
-        }
-
-        path.Add(closestPoint);
-        points.Remove(closestPoint);
-        cumulativeDistance += smallestDistance;
-      }
-
-      return Tuple.Create(path, cumulativeDistance);
-    }
-
+    
     private static double GetDistance(Point point1, Point point2)
     {
       return Math.Sqrt(Math.Pow(point1.X - point2.X, 2) + Math.Pow(point1.Y - point2.Y, 2));
