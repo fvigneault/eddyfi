@@ -30,6 +30,52 @@ namespace ContestantApp
       Console.ReadKey();
     }
 
+    private static List<Point> GetPoints()
+    {
+      List<Point> map = LoadMap();
+
+      var links = GetCircularPath(map);
+      var path = GetPathFromLinks(links);
+
+      for (int i = 0; i < 30; ++i)
+      {
+        path = RemoveLowestPayingPoint(path);
+      }
+
+      return path;
+    }
+
+    private static List<Point> RemoveLowestPayingPoint(List<Point> path)
+    {
+      List<Link> links = path.Zip(path.Skip(1).Append(path.First()), (p1, p2) => new Link { p1 = p1, p2 = p2, distance = GetDistance(p1, p2) }).ToList();
+
+      Tuple<Link, Link> smallestPairOfLinks = null;
+      double smallestGainFromPairOfLinks = Double.PositiveInfinity;
+
+      foreach (Tuple<Link,Link> pairOfLinks in links.Zip(links.Skip(1).Append(links.First()), Tuple.Create))
+      {
+        if (pairOfLinks.Item1.p2.Value == 0) // Do not remove pair of link that passed on the starting point 
+        {
+          continue;
+        }
+
+        var costPairOfLinks = (pairOfLinks.Item1.distance + pairOfLinks.Item2.distance) * 10;
+        var costDirectPath = GetDistance(pairOfLinks.Item1.p1, pairOfLinks.Item2.p2) * 10;
+        var extraCostFromPairOfLinks = costPairOfLinks - costDirectPath;
+        var gainFromPairOfLinks = pairOfLinks.Item1.p2.Value - extraCostFromPairOfLinks;
+
+        if (gainFromPairOfLinks < smallestGainFromPairOfLinks)
+        {
+          smallestGainFromPairOfLinks = gainFromPairOfLinks;
+          smallestPairOfLinks = pairOfLinks;
+        }
+      }
+
+      Debug.Assert(path.Remove(smallestPairOfLinks.Item1.p2));
+
+      return path;
+    }
+
     public static double CalculateScore(List<Point> points)
     {
       return points.Zip(points.Skip(1).Append(points.First()), (point1, point2) => GetDistance(point1, point2) * -10 + point1.Value).Sum();
@@ -165,23 +211,6 @@ namespace ContestantApp
       var bestPath = path.Skip(indexOfFirstPoint).ToList();
       bestPath.AddRange(path.Take(indexOfFirstPoint).ToList());
       return bestPath;
-    }
-
-    private static List<Point> GetPoints()
-    {
-      List<Point> map = LoadMap();
-
-      map.Sort((point1, point2) => point1.Value.CompareTo(point2.Value));
-
-      var payingMapWithFirst = new List<Point>(map);
-      payingMapWithFirst.RemoveRange(1, 30);
-
-      payingMapWithFirst = payingMapWithFirst.Take(170).ToList();
-
-      var links = GetCircularPath(payingMapWithFirst);
-      var path = GetPathFromLinks(links);
-
-      return path;
     }
     
     private static double GetDistance(Point point1, Point point2)
