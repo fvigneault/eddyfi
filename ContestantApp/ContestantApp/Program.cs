@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -52,7 +52,7 @@ namespace ContestantApp
       points.Sort((point1, point2) => point1.Value.CompareTo(point2.Value));
       points.RemoveRange(1, 30);
 
-      ISolver solver = new GreedyDetours(points);
+      ISolver solver = new GreedyDetours2(points);
 
       return solver.GetPath();
     }

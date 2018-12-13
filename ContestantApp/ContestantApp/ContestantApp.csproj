@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Solutions\GreedyDetours2.cs" />
     <Compile Include="Solutions\GreedyDetours.cs" />
     <Compile Include="Solutions\GreedyDistance.cs" />
     <Compile Include="Solutions\ISolver.cs" />
