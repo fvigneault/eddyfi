@@ -44,7 +44,7 @@ namespace ContestantApp.Solutions
     public List<Point> GetPath()
     {
       var links = GetCircularPath(points);
-      var path = GetPathFromLinks(links);
+      var path = GetPathFromLinks(links, points.Find(p => p.Value == 0));
 
       return path;
     }
@@ -148,48 +148,19 @@ namespace ContestantApp.Solutions
       return links;
     }
 
-    private List<Point> GetPathFromLinks(List<Link> links)
+    private List<Point> GetPathFromLinks(List<Link> links, Point startingPoint)
     {
-      var path = new List<Point>();
+      List<Point> orderedPoints = new List<Point>();
 
-      var firstLink = links.First();
-      path.Add(firstLink.P1);
-      path.Add(firstLink.P2);
-      links.RemoveAt(0);
-
-      while (links.Count != 0)
+      Point currentPoint = startingPoint;
+      do
       {
-        var currentLink = links.First();
-        links.RemoveAt(0);
+        orderedPoints.Add(currentPoint);
+        Point nextPoint = links.Find(link => link.P1 == currentPoint).P2;
+        currentPoint = nextPoint;
+      } while (!currentPoint.Equals(startingPoint));
 
-        var indexP1 = path.IndexOf(currentLink.P1);
-        var indexP2 = path.IndexOf(currentLink.P2);
-
-        if (indexP1 == -1 && indexP2 == -1)
-        {
-          links.Add(currentLink);
-        }
-        else if (indexP1 != -1 && indexP2 == -1)
-        {
-          if (indexP1 + 1 == path.Count)
-          {
-            path.Add(currentLink.P2);
-          }
-          else
-          {
-            path.Insert(indexP1 + 1, currentLink.P2);
-          }
-        }
-        else if (indexP1 == -1 && indexP2 != -1)
-        {
-          path.Insert(indexP2, currentLink.P1);
-        }
-      }
-
-      var indexOfFirstPoint = path.FindIndex(point => point.Value == 0);
-      var bestPath = path.Skip(indexOfFirstPoint).ToList();
-      bestPath.AddRange(path.Take(indexOfFirstPoint).ToList());
-      return bestPath;
+      return orderedPoints;
     }
   }
 }
