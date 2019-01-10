@@ -24,6 +24,8 @@ We took a greedy approach to finding a good path inside each clusters. The algor
 
 When applying that algorithm to clusters, we used a "cluster represent", which is the first point of the cluster's internal path. This way we could find a path that went through all the clusters using our greedy approach.
 
+Result : 579,115.99$
+
 This algorithm gave us a rather disappointing result at 579,115.99$. The path, once drawn in a graph, was clearly sub-optimal and included many long trips.
 
 The problem was the travel distance between the clusters, which ended up being too big to justify the need for our clusters.
@@ -33,6 +35,11 @@ The problem was the travel distance between the clusters, which ended up being t
 ### Second iteration : Get on that leaderboard
 
 Seeing that the traveling time between clusters was at fault, we opted for a very simple approach by running our greedy algorithm on all the jobs at once.
+
+Result : 614,665.38$
+```diff
++ 35,549.69$
+```
 
 Surprisingly, this performed rather well at 614,665.38$ with a path that contained only a few abnormally long paths between points. This algorithm was enough to put us at the top of the leaderboard at this point in the competition.
 
@@ -58,6 +65,9 @@ ________________________
 So from the starting point located in the middle, we could simply follow the hard-coded clusters in the order shown above. To make sure we finished at the right place at then end of each clusters, we simplified the path finding algorithm in each cluster to simply selecting the closest point in X to go next, which meant that our path was always going from one side to the other, zigzaging in Y all along.
 
 Result : 578,071.99$ ... still no gain.
+```diff
+- 36,586.39$
+```
 
 ![Clusters Ordered Path Result](img/clusters_ordered_path.png)
 
@@ -108,14 +118,29 @@ In fact, we can simply iterate over the existing links and split the one link wh
 Applying this iteratively for our 170 points, we end up building a path that always take into account the fact that it must come back home, and that always tries to minimize its detours. 
 
 Result : 632,443$. That's a significant improvement!
+```diff
++ 17,777.62$
+```
 
-The beauty of this algorithm is its simplicity : no need to watch out for loops in the path we're creating. Still, our algorithm falls quickly into a local minima, because the order, by which the points appear, changes the links we choose to split. A simple shuffling of the list yields a different result, not too far off from our initial score, but still unpredictable. We got a score of 637,636$ once just by shuffling for some time!
+The beauty of this algorithm is its simplicity : no need to watch out for loops in the path we're creating. Still, our algorithm falls quickly into a local minima, because the order, by which the points appear, changes the links we choose to split. A simple shuffling of the list yields a different result, not too far off from our initial score, but still unpredictable.
+
+We got a score of 637,636$ once just by shuffling for some time!
+```diff
++ 5,193$
+```
 
 ![Greedy Detours Result](img/greedy_detours.png)
 
 ### Seventh iteration : Can we make it predicable?
 
-TODO
+Instead of simply adding points in the order they come in the initial list, we can try to make the smallest detour of all remaining points. This will ensure that, given the same starting point, the algorithm will always produce the same result no matter the order of the points in the list.
+
+Result : 630,000$.
+```diff
+- 7,636$
+```
+
+This yields a score well below the highest seen score : 630,000$. In this version of the algorithm, we fall in the same local optima pitfall, which prevent us from getting the true best score possible.
 
 ## Conclusion
 
@@ -124,7 +149,8 @@ We had a blast solving this problem during the Eddyfi Challenge and we sure lear
 Our key take-aways :
 * Creating small scale reproduction of the problem to solve manually really helps at understanding the problem. A white board is the most useful tool for reasoning about a problem.
 * KISS is still true : "Keep it simple, stupid" is especially relevant when trying to solve a problem. The more constraints and complex rules we add to an algorithm, the more difficult it becomes to reason about the properties of the solution it will find.
-* Dynamic programming is really cool and helps a lot to solve problems like this one. It's not a fit-all solution, but it's a great tool to have in your problem solving tool box.
+* Greedy algorithms are quick and easy ways to find solutions for the Traveling Salesman Problem, but they all have the same pitfall : they will necessarily get stuck in a local optima. Greedy algorithms simplify the problem greatly at the cost of losing the global picture. In problems like TSP, this means that they are only good at finding good-enough solutions, while the true optimal solution is much more difficult to obtain. Sometimes a fast good-enough solution is enough!
+* Dynamic programming is really cool and helps a lot to solve problems like this one : it goes hand in hand with the greedy approach. It's not a fit-all solution, but it's a great tool to have in your problem solving tool box.
 
 We wish to thank Eddyfi Technologies for welcoming us in their HQ for this incredible day! If you have any NDT needs, be sure to check them out at https://www.eddyfi.com/ 
 
